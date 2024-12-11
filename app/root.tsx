@@ -5,12 +5,14 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { DB } from "~/services/firebase.server";
 
 import styles from "./tailwind.css?url";
 
 import type { MetaFunction } from "@remix-run/node";
 import { Header } from "./components/Header";
+import { authenticator } from "./services/auth.server";
 
 export const meta: MetaFunction = () => {
   return [
@@ -34,6 +36,17 @@ export const links: LinksFunction = () => [
     href: styles,
   },
 ];
+
+export async function loader({request}: LoaderFunctionArgs) {
+  try {
+    const user = await authenticator.isAuthenticated(request, { failureRedirect: "/login" });
+    return {DB, userName: user.displayName}
+  }
+  catch (error) {
+    return {DB, userName: ""}
+
+  }
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (

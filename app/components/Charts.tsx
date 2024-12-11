@@ -41,7 +41,7 @@ function EloAllTime() {
                                 dataKey={
                                     (list: UserStats[]) => list.find((stats: UserStats) => stats.userId == userId)?.elo
                                 }
-                                stroke={colors[index]} width={1} dot={false} name={userNames[userId].name}/>
+                                stroke={colors[index]} width={1} dot={false} name={userNames[userId].name} />
                         })
                     }
                     <YAxis type="number" allowDataOverflow domain={['dataMin - 10', 'dataMax + 10']} allowDecimals={false} />

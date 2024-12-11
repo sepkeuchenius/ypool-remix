@@ -32,7 +32,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function Dashboard() {
-    const { standings } = useLoaderData<typeof loader>();
     return (
         <div className="flex flex-col pt-10">
             <div className="flex flex-row items-center justify-center">
