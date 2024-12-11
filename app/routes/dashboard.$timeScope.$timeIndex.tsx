@@ -3,7 +3,7 @@ import { ArrowLeftIcon, ArrowRightIcon, CrownIcon, MedalIcon } from "lucide-reac
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
 import { EloStanding } from "./dashboard/route";
-import { getElos, getUserNames } from "~/services/firebase.server";
+import { getElos, getElosAsUserStats, getUserNames } from "~/services/firebase.server";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
     const user = await authenticator.isAuthenticated(request, { failureRedirect: "/login" });
@@ -11,7 +11,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const timeScope = params.timeScope || "week"
     const timeIndex = timeScope != "alltime" ? Number(params.timeIndex || "0") : 0
 
-    const elos = await getElos();
+    const elos = await getElosAsUserStats();
     const lastEloStanding = elos[elos.length - 1].sort((a: EloStanding, b: EloStanding) => b.elo - a.elo);
 
     const userNames = await getUserNames();
@@ -75,7 +75,7 @@ function TimeRangePicker() {
 
 
     return (
-        <div className="flex flex-row items-center gap-10 justify-center w-full mb-3" onClick={(e) => { console.log(e) }}>
+        <div className="flex flex-row items-center gap-10 justify-center w-full mb-3" >
             {timeScope != "alltime" ? (<Link to={`/dashboard/${timeScope}/${Math.max(0, Number(timeIndex) - 1)}`} className="cursor-pointer">
                 <ArrowLeftIcon className="cursor-pointer" />
             </Link>) : null}

@@ -3,7 +3,7 @@ import { authenticator } from "../../services/auth.server";
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { ArrowLeftIcon, ArrowRight, ArrowRightIcon } from "lucide-react";
 import { Charts } from "~/components/Charts";
-import { getElos, getMatches, getUserNames } from "~/services/firebase.server";
+import { getElos, getElosAsUserStats, getMatches, getUserNames } from "~/services/firebase.server";
 
 
 export interface UserStats {
@@ -24,7 +24,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         { name: "Charlie", elo: 1000, wins: 7, losses: 7, draws: 3 },
     ]
 
-    const elos = await getElos()
+    const elos = await getElosAsUserStats()
     const matches = await getMatches()
     const userNames = await getUserNames()
 

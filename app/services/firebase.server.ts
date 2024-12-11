@@ -28,78 +28,25 @@ export const app = initializeApp(firebaseConfig);
 export const auth = initializeAuth(app)
 
 
-export function createGame(user: UserProps) {
-  const db = getDatabase(app);
-
-  const gameId = `game_${Date.now()}`;
-  const gameData = {
-    userId: user.uid,
-    createdAt: new Date().toISOString(),
-    status: "pending"
-  };
-
-  set(getGameRef(gameId), gameData)
-    .then(() => {
-      console.log("Game created successfully");
-    })
-    .catch((error) => {
-      console.error("Error creating game: ", error);
-    });
-  push(child(ref(db, user.uid), "games"), gameId)
-
-  return gameId;
-
-}
-
-export function getGameRef(gameId: string) {
-  const db = getDatabase(app);
-  return ref(db, 'games/' + gameId);
-}
-
-export async function ensureUserExists(user: UserProps) {
-  const db = getDatabase(app);
-  const userRef = ref(db, user.uid);
-  return await get(userRef).then((snapshot) => {
-    if (snapshot.exists()) {
-    } else {
-      set(userRef, user).catch((error) => {
-        console.log(error)
-      });
-    }
-  });
-
-}
-
-export async function getUserGames(user: UserProps): Promise<string[]> {
-  const db = getDatabase(app);
-  await ensureUserExists(user)
-  const userGamesRef = child(ref(db, user.uid), "games");
-  return await get(userGamesRef).then(async (snapshot) => {
-    if (snapshot.exists()) {
-      console.log(snapshot.val());
-      return Object.values(snapshot.val())
-    } else {
-      console.log("No user games yet");
-      return await set(userGamesRef, []).catch((error) => {
-        console.log(error)
-        return []
-      }).then(() => { return [] });
-    }
-  });
-}
-
-export async function getElos(): Promise<UserStats[][]> {
+export async function getElos(): Promise<EloStanding[]> {
   const db = getDatabase(app);
   const elosRef = ref(db, 'elos');
   return await get(elosRef).then((snapshot) => {
     if (snapshot.exists()) {
-      return asUserStats(Object.values(snapshot.val()))
+      return Object.values(snapshot.val())
     } else {
       console.log("No elos yet");
       return []
     }
   });
 }
+
+export async function getElosAsUserStats(): Promise<UserStats[][]> {
+  return await getElos().then((data) => {
+    return asUserStats(data);
+  });
+}
+
 
 function asUserStats(data: object[]): UserStats[][] {
   return data.map((eloSnapshot: any) => {
@@ -121,14 +68,18 @@ export async function getUserNames(): Promise<object> {
   });
 }
 
-interface Match {
+export interface EloStanding {
+  [key: string]: number;
+}
+
+export interface PlayedMatch {
   loser: string;
   winner: string;
   issuer: string;
   datetime?: string;
 }
 
-export async function getMatches(): Promise<Match[]> {
+export async function getMatches(): Promise<PlayedMatch[]> {
   const db = getDatabase(app);
   const gamesRef = ref(db, 'matches');
   return await get(gamesRef).then((snapshot) => {

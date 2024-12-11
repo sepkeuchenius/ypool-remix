@@ -21,7 +21,6 @@ function EloAllTime() {
     const lastEloStanding = elos[elos.length - 1];
     const players = lastEloStanding.map((userStats: UserStats) => userStats.userId);
 
-    console.log(userNames)
 
 
     return (
