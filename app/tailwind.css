@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  @apply bg-white dark:bg-gray-950;
+
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
+}
+
+
+
+table.scoretable td {
+  padding: 4px 0;
+  height:20px;
+}
+table.scoretable th {
+  text-align: left;
+  height:20px;
+}
+
