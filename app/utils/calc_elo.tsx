@@ -41,7 +41,7 @@ function isPlayerDead(player: Player, games: PlayedMatch[]): boolean {
 export function listGamesInTimeFrame(games: PlayedMatch[], startTime: moment.Moment, endTime: moment.Moment): PlayedMatch[] {
     return games.filter((game) => {
         const gameMoment = moment(game.datetime);
-        return gameMoment.isAfter(startTime) && gameMoment.isBefore(endTime);
+        return game.datetime && gameMoment.isAfter(startTime) && gameMoment.isBefore(endTime);
     });
 }
 
