@@ -13,6 +13,7 @@ export interface UserStats {
     losses?: number;
     draws?: number;
     userId: string;
+    dead?: boolean;
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

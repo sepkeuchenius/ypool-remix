@@ -2,8 +2,10 @@ import { Link, useLoaderData, useNavigate, useNavigation } from "@remix-run/reac
 import { ArrowLeftIcon, ArrowRightIcon, CrownIcon, MedalIcon } from "lucide-react";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
-import { EloStanding } from "./dashboard/route";
-import { getElos, getElosAsUserStats, getUserNames } from "~/services/firebase.server";
+import { EloStanding, getElos, getElosAsUserStats, getMatches, getUserNames } from "~/services/firebase.server";
+import { UserStats } from "./dashboard/route";
+import { calcEloFromGames, getTimeFrameByScope, listGamesInTimeFrame as listMatchesInTimeFrame } from "~/utils/calc_elo";
+import { DB } from "~/services/firebase.server";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
     const user = await authenticator.isAuthenticated(request, { failureRedirect: "/login" });
@@ -12,10 +14,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const timeIndex = timeScope != "alltime" ? Number(params.timeIndex || "0") : 0
 
     const elos = await getElosAsUserStats();
-    const lastEloStanding = elos[elos.length - 1].sort((a: EloStanding, b: EloStanding) => b.elo - a.elo);
+    const lastEloStanding = elos[elos.length - 1].sort((a: UserStats, b: UserStats) => b.elo - a.elo);
 
     const userNames = await getUserNames();
-    return { standings: lastEloStanding, timeScope, timeIndex, elos, userNames, userId: user.uid }
+
+    const matches = await getMatches()
+
+    const [startTime, endTime] = getTimeFrameByScope(timeScope, timeIndex);
+    const matchesInTimeFrame = listMatchesInTimeFrame(matches, startTime, endTime);
+    const lastElos = calcEloFromGames(matchesInTimeFrame);
+    
+    return { standings: lastElos, timeScope, timeIndex, elos, userNames, userId: user.uid }
 
 
 }
@@ -24,12 +33,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export default function Dashboard() {
     const { standings, elos, userNames } = useLoaderData<typeof loader>();
 
+    const userHalf = Math.ceil(standings.length / 2)
     return (
         <div className="rounded p-6  bg-white" style={{ minWidth: 800 }}>
             <TimeRangePicker />
             <div className="flex flex-row gap-10 items-start justify-between w-full">
-                <StaningsTable standings={standings.slice(0, Math.ceil(standings.length / 2))} />
-                <StaningsTable indexStart={10} standings={standings.slice(Math.ceil(standings.length / 2))} />
+                <StaningsTable standings={standings.slice(0, userHalf)} />
+                <StaningsTable indexStart={userHalf} standings={standings.slice(userHalf)} />
             </div>
         </div>
     );
@@ -45,12 +55,12 @@ function Standing({ index}: { index: number}) {
     )
 }
 
-function StaningsTable({ standings, indexStart }: { standings: EloStanding[], indexStart?: number }) {
+function StaningsTable({ standings, indexStart }: { standings: UserStats[], indexStart?: number }) {
     const {  userNames, userId } = useLoaderData<typeof loader>()
     return (<table className="w-1/2 scoretable text-xl px-10">
         {
-            standings.map((standing: EloStanding, index: number) => (
-                <tr className="max-h-5">
+            standings.map((standing: UserStats, index: number) => (
+                <tr className="max-h-5" style={standing.dead ? {textDecoration: 'line-through', fontSize:13}:{}}>
                     <td><Standing index={indexStart ? indexStart + index : index} /></td>
                     <td style={standing.userId == userId ? {color: "#5f5fff"}: {}}>{userNames[standing.userId].name}</td>
                     <Elo elo={standing.elo} />

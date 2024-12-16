@@ -1,4 +1,7 @@
+import moment from "moment";
 import { EloStanding, PlayedMatch } from "~/services/firebase.server";
+import { calcEloFromGames, listGamesInTimeFrame } from "~/utils/calc_elo";
+import { UserStats } from "./route";
 
 export interface Match {
     outcome?: PlayedMatch;
@@ -6,19 +9,11 @@ export interface Match {
     players: string[];
 }
 
-
-interface MonthMatches{
-    year: number
-    month: number
-    matches: PlayedMatch[]
-    last_elo: EloStanding
-}
-
 interface MonthMatches {
     year: number;
     month: number;
     matches: PlayedMatch[];
-    last_elo: EloStanding;
+    last_elo: UserStats[];
 }
 
 export function calc_monthly_matches(
@@ -35,15 +30,18 @@ export function calc_monthly_matches(
                 year === tournies[tournies.length - 1].year &&
                 month === tournies[tournies.length - 1].month
             ) {
-                tournies[tournies.length - 1].matches.push(match);
-                tournies[tournies.length - 1].last_elo = elos[index];
+                return
             } else {
-                tournies.push({
-                    year,
-                    month,
-                    matches: [match],
-                    last_elo: elos[index],
-                });
+                const monthMatches = listGamesInTimeFrame(matches, moment(matchDate).startOf('month'), moment(matchDate).endOf('month'));
+                const ratings = calcEloFromGames(monthMatches);
+                tournies.push(
+                    {
+                        matches: monthMatches,
+                        year: year,
+                        month: month,
+                        last_elo: ratings
+                    }
+                )
             }
         }
     });
@@ -66,27 +64,21 @@ export interface Tourny {
 export function calc_tourny_scheme(
     month_matches: MonthMatches, previous_month_matches: MonthMatches
 ): Tourny | null {
-    const players: string[] = [];
-    previous_month_matches.matches.forEach(match => {
-        if (!players.includes(match.winner)) players.push(match.winner);
-        if (!players.includes(match.loser)) players.push(match.loser);
-    });
+    const players = previous_month_matches.last_elo.map((player) => player.userId);
 
-    //sort the players by elo
-    players.sort((a, b) => previous_month_matches.last_elo[b] - previous_month_matches.last_elo[a]);
-    
+
     //decide the amount of players (needs to be a power of 2)
     const max_players = 4;
     if (players.length < max_players) return null;
 
     //decide who plays the tournies
     const tourny_players = players.slice(0, max_players);
-    
+
     //the first matches match up the best player with the worst player, the second best with the second worst, etc.
     const first_matches = tourny_players.slice(0, max_players / 2).map((player, i) => ({
         players: [player, tourny_players[max_players - i - 1]],
     } as Match));
-    const first_round = {matches: first_matches, played: [], closed: false} as Round;
+    const first_round = { matches: first_matches, played: [], closed: false } as Round;
     const rounds = Math.log2(max_players);
     const tourny = {
         year: month_matches.year,
@@ -117,14 +109,11 @@ function play_tourny(
     const next_round = tourny.rounds[tourny.rounds.indexOf(round) + 1] || null;
     //every round has matches, that all have a counterpart for the following round
     round = make_counterparts(round);
-    
-    console.log(round.matches.length);
 
-    console.log(round.matches)
 
     // for all matches in the round, we'll now check if they have been played
-    for(const match of round.matches) {
-        for(const index in played_matches) {
+    for (const match of round.matches) {
+        for (const index in played_matches) {
             if (Number(index) < last_match_index) {
                 continue;
             }
@@ -139,13 +128,10 @@ function play_tourny(
                 match.outcome = played_match;
                 if (!match.counterpart) {
                     round.closed = true;
-                    console.log("tourny completed!");
-                    console.log(_get_username(played_match.winner));
                     tourny.winner = played_match.winner;
                     return tourny;
                 } else if (match.counterpart.outcome) {
                     if (next_round) {
-                        console.log("appending next match");
                         next_round.matches.push({
                             players: [match.counterpart.outcome.winner, played_match.winner]
                         });
@@ -155,7 +141,6 @@ function play_tourny(
                     }
                 }
                 else {
-                    console.log("match played, but counterpart not yet");
                     break
                 }
             }
@@ -166,7 +151,6 @@ function play_tourny(
         round.closed = true;
         return play_tourny(tourny, next_round, played_matches, last_match_index);
     } else {
-        console.log("not all matches have been played in round");
         if (next_round) make_counterparts(next_round);
         return tourny;
     }
