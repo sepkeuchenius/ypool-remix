@@ -63,7 +63,7 @@ export default function Dashboard() {
 
     const userHalf = Math.ceil(standings.length / 2)
     return (
-        <div className="rounded p-6  bg-white" style={{ minWidth: 800 }}>
+        <div className="rounded p-6 dark:bg-slate-800 bg-white" style={{ minWidth: 800 }}>
             <TimeRangePicker />
             <div className="flex flex-row gap-10 items-start justify-between w-full">
                 <StaningsTable standings={standings.slice(0, userHalf)} />
@@ -129,7 +129,7 @@ function TimeScopePicker() {
     const { timeScope, timeIndex } = useLoaderData<typeof loader>()
     const navigate = useNavigate()
     return (
-        <select value={timeScope} className="text-l bg-transparent border-1 border-slate-500 hover:bg-slate-100 px-3 py-2 rounded-l"
+        <select value={timeScope} className="text-l bg-transparent border-1 border-slate-500 hover:bg-slate-100 px-3 py-2 rounded-l dark:text-slate-800 dark:bg-slate-300"
             onChange={(event) => { navigate(`/dashboard/${event.target.value}/0`) }}>
             <option value="week">Week{timeIndex > 1 ? 's' : null}</option>
             <option value="month">Month{timeIndex > 1 ? 's' : null}</option>

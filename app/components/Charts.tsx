@@ -24,7 +24,7 @@ function EloAllTime() {
 
 
     return (
-        <div className="bg-white rounded p-5">
+        <div className="bg-white rounded p-5 dark:bg-slate-800">
             <div className="text-xl text-center">Elo all time</div>
             <ResponsiveContainer width={500} height={500} >
                 <LineChart
@@ -83,7 +83,7 @@ function PlaysPerWeek() {
 
 
     return (
-        <div className="bg-white rounded p-5">
+        <div className="bg-white rounded p-5 dark:bg-slate-800">
             <div className="text-xl text-center">Matches per week</div>
             <ResponsiveContainer width={500} height={500} className={""}>
                 <LineChart
@@ -115,7 +115,7 @@ function UserWinsAndLosses() {
         }
     }
     return (
-        <div className="bg-white rounded p-5">
+        <div className="bg-white rounded p-5 dark:bg-slate-800">
             <div className="text-xl text-center">Wins vs Losses</div>
             <ResponsiveContainer width={500} height={500} className={""}>
                 <AreaChart width={500} height={500} data={winsVsLosses}

@@ -57,7 +57,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="bg-slate-100 min-h-full">
+      <body className="bg-slate-100 min-h-full dark:bg-slate-700">
         <Header />
         {children}
         <ScrollRestoration />

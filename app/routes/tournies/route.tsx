@@ -52,9 +52,9 @@ export default function Tournies() {
 
 function TournyTable({ tourny, index }: { tourny: Tourny, index: number }) {
     return (
-        <div className="w-full flex-col border border-2 rounded-xl bg-white p-4 my-5 gap-5">
+        <div className="w-full flex-col border border-2 rounded-xl bg-white p-4 my-5 gap-5 dark:bg-slate-600">
             <div className="flex flex-row gap-3">
-                {index === 0 ? <RadioIcon color={'green'}/> : <></>}
+                {index === 0 ? <RadioIcon color={'green'} /> : <></>}
                 <h1>{tourny.year} - {tourny.month}</h1>
             </div>
             <div className="flex flex-col gap-4">
@@ -70,8 +70,8 @@ function TournyTable({ tourny, index }: { tourny: Tourny, index: number }) {
 
 function RoundTable({ round, index }: { round: Round, index?: number }) {
     return (
-        <div className="bg-slate-100 rounded p-4 border-2 my-3 flex flex-col gap-3 align-center items-center">
-            <h2 className="bg-blue-100 w-fit px-4 py-2 rounded-l flex flex-row justify-center gap-3"> Round {index} </h2>
+        <div className="bg-slate-100 dark:bg-slate-800 rounded p-4 border-2 my-3 flex flex-col gap-3 align-center items-center">
+            <h2 className="bg-blue-100 dark:bg-slate-600 w-fit px-4 py-2 rounded-l flex flex-row justify-center gap-3"> Round {index} </h2>
 
             {round.matches.map((match, index) => (
                 <MatchTable match={match} />
@@ -89,16 +89,22 @@ function MatchTable({ match }: { match: Match }) {
                 <UserBadge userId={match.players[1]} />
 
             </div>
-            {match.outcome && match.outcome.winner ? <WinnerBadge userId={match.outcome.winner} /> : <div className="px-3 py-2 bg-red-100 w-64 text-center rounded align-center items-center flex flex-row justify-center"><CircleSlashedIcon /></div>}
+            {match.outcome && match.outcome.winner ? <WinnerBadge userId={match.outcome.winner} /> : <NotPlayedBadge />}
 
         </div>
+    )
+}
+
+function NotPlayedBadge() {
+    return (
+        <div className="px-3 py-2 bg-red-100 dark:bg-red-900 w-64 text-center rounded align-center items-center flex flex-row justify-center"><CircleSlashedIcon /></div>
     )
 }
 
 function UserBadge({ userId }: { userId: string }) {
     const { userNames } = useLoaderData<typeof loader>()
     return (
-        <div className="px-4 py-2 bg-slate-200 rounded-l text-center w-64">
+        <div className="px-4 py-2 bg-slate-200 dark:bg-slate-900 rounded-l text-center w-64">
             {userNames[userId].name}
         </div>
     )
@@ -107,7 +113,7 @@ function UserBadge({ userId }: { userId: string }) {
 function WinnerBadge({ userId }: { userId: string }) {
     const { userNames } = useLoaderData<typeof loader>()
     return (
-        <div className="px-4 py-2 bg-green-300 rounded-l text-center w-64 mt-5 flex flex-row justify-center gap-4">
+        <div className="px-4 py-2 bg-green-300 dark:bg-green-900 rounded-l text-center w-64 mt-5 flex flex-row justify-center gap-4">
             <AwardIcon /> {userNames[userId].name}
         </div>
     )
