@@ -11,7 +11,7 @@ import { User } from "lucide-react";
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 // Your web app's Firebase configuration
 
-export const DB = process.env.NODE_ENV == "production" ? "default-rtdb" : "dev-db"
+export const DB = process.env.NODE_ENV == "production" ? "default-rtdb" : "default-rtdb"
 
 const firebaseConfig = {
   apiKey: "AIzaSyBhQ_fWHC_XM72eR9uShjP74ZKKdeNGR3c",

@@ -23,6 +23,34 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const [startTime, endTime] = getTimeFrameByScope(timeScope, timeIndex);
     const matchesInTimeFrame = listMatchesInTimeFrame(matches, startTime, endTime);
     const lastElos = calcEloFromGames(matchesInTimeFrame);
+
+    console.log(matches.length)
+    console.log(elos.length)
+    let lastMatchPlayers = new Set()
+    for(const matchI in matches){
+        const index = Number(matchI)
+        const match = matches[index]
+        if(elos[index] && index > 0){
+            const prevElo = elos[index - 1]
+            const changes = elos[index].map((standing: UserStats) => {
+                const prevStanding = prevElo.find((prevStanding: UserStats) => prevStanding.userId == standing.userId)
+                return {
+                    ...standing,
+                    eloChange: standing.elo - (prevStanding ? prevStanding.elo : 0)
+                }
+            }).filter((standing: UserStats) => standing.eloChange != 0).map((standing: UserStats) => {return userNames[standing.userId].name})
+            const match = matches[index]
+            console.log(changes)
+            console.log(new Set(changes) == lastMatchPlayers)
+            console.log(userNames[match.loser].name, userNames[match.winner].name)
+            lastMatchPlayers = new Set([userNames[match.loser].name, userNames[match.winner].name])
+        }
+        else {
+            console.log(userNames[match.loser].name, userNames[match.winner].name)
+            lastMatchPlayers = new Set([userNames[match.loser].name, userNames[match.winner].name])
+        }
+
+    }
     
     return { standings: lastElos, timeScope, timeIndex, elos, userNames, userId: user.uid }
 
