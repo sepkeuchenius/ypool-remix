@@ -37,17 +37,6 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export async function loader({request}: LoaderFunctionArgs) {
-  try {
-    const user = await authenticator.isAuthenticated(request, { failureRedirect: "/login" });
-    return {DB, userName: user.displayName}
-  }
-  catch (error) {
-    return {DB, userName: ""}
-
-  }
-}
-
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full">

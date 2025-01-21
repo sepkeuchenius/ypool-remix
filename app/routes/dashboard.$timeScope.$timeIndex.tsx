@@ -1,4 +1,4 @@
-import { Link, useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
+import { Link, useLoaderData, useNavigate, useNavigation, useSearchParams } from "@remix-run/react";
 import { ArrowLeftIcon, ArrowRightIcon, CrownIcon, MedalIcon } from "lucide-react";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
@@ -6,6 +6,11 @@ import { EloStanding, getElos, getElosAsUserStats, getMatches, getUserNames } fr
 import { UserStats } from "./dashboard/route";
 import { calcEloFromGames, getTimeFrameByScope, listGamesInTimeFrame as listMatchesInTimeFrame } from "~/utils/calc_elo";
 import { DB } from "~/services/firebase.server";
+import Slider from 'rc-slider';
+import { useState } from "react";
+
+
+const LEARNING_RATE_DEFAULT = 4
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
     const user = await authenticator.isAuthenticated(request, { failureRedirect: "/login" });
@@ -19,18 +24,19 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const userNames = await getUserNames();
 
     const matches = await getMatches()
+    let { searchParams } = new URL(request.url);
+    const learningRate = Number(searchParams.get("learningrate") || LEARNING_RATE_DEFAULT);
+
 
     const [startTime, endTime] = getTimeFrameByScope(timeScope, timeIndex);
     const matchesInTimeFrame = listMatchesInTimeFrame(matches, startTime, endTime);
-    const lastElos = calcEloFromGames(matchesInTimeFrame);
+    const lastElos = calcEloFromGames(matchesInTimeFrame, learningRate);
 
-    console.log(matches.length)
-    console.log(elos.length)
     let lastMatchPlayers = new Set()
-    for(const matchI in matches){
+    for (const matchI in matches) {
         const index = Number(matchI)
         const match = matches[index]
-        if(elos[index] && index > 0){
+        if (elos[index] && index > 0) {
             const prevElo = elos[index - 1]
             const changes = elos[index].map((standing: UserStats) => {
                 const prevStanding = prevElo.find((prevStanding: UserStats) => prevStanding.userId == standing.userId)
@@ -38,20 +44,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
                     ...standing,
                     eloChange: standing.elo - (prevStanding ? prevStanding.elo : 0)
                 }
-            }).filter((standing: UserStats) => standing.eloChange != 0).map((standing: UserStats) => {return userNames[standing.userId].name})
+            }).filter((standing: UserStats) => standing.eloChange != 0).map((standing: UserStats) => { return userNames[standing.userId].name })
             const match = matches[index]
-            console.log(changes)
-            console.log(new Set(changes) == lastMatchPlayers)
-            console.log(userNames[match.loser].name, userNames[match.winner].name)
             lastMatchPlayers = new Set([userNames[match.loser].name, userNames[match.winner].name])
         }
         else {
-            console.log(userNames[match.loser].name, userNames[match.winner].name)
             lastMatchPlayers = new Set([userNames[match.loser].name, userNames[match.winner].name])
         }
 
     }
-    
+
     return { standings: lastElos, timeScope, timeIndex, elos, userNames, userId: user.uid }
 
 
@@ -60,11 +62,28 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export default function Dashboard() {
     const { standings, elos, userNames } = useLoaderData<typeof loader>();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [learningRate, setLearningRate] = useState(searchParams.get('learningrate') || LEARNING_RATE_DEFAULT)
+    const onSliderUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const params = new URLSearchParams()
+        params.set('learningrate', e.currentTarget.value.toString())
+        setSearchParams(params, {
+            preventScrollReset: true,
+        });
+        setLearningRate(e.currentTarget.value);
+    }
 
     const userHalf = Math.ceil(standings.length / 2)
     return (
-        <div className="rounded p-6 dark:bg-slate-800 bg-white" style={{ minWidth: 800 }}>
+        <div className="rounded p-6 dark:bg-slate-800 bg-white flex flex-col gap-5" style={{ minWidth: 800 }}>
             <TimeRangePicker />
+            <div className='flex flex-col justify-center items-center'>
+                Learning Rate: {learningRate}
+                <input type='range' className='w-1/2' defaultValue={Number(searchParams.get('learningrate')) || LEARNING_RATE_DEFAULT}
+                    onChange={onSliderUpdate} />
+
+            </div>
+
             <div className="flex flex-row gap-10 items-start justify-between w-full">
                 <StaningsTable standings={standings.slice(0, userHalf)} />
                 <StaningsTable indexStart={userHalf} standings={standings.slice(userHalf)} />
@@ -74,23 +93,23 @@ export default function Dashboard() {
 }
 
 
-function Standing({ index}: { index: number}) {
+function Standing({ index }: { index: number }) {
     return (
         <td>
             {index == 0 ? (<CrownIcon color="gold" />) : index < 2 ? (<MedalIcon color="silver" />) : index < 3 ? (<MedalIcon color="#CD7F32" />) : index + 1}
-            {}
+            { }
         </td>
     )
 }
 
 function StaningsTable({ standings, indexStart }: { standings: UserStats[], indexStart?: number }) {
-    const {  userNames, userId } = useLoaderData<typeof loader>()
+    const { userNames, userId } = useLoaderData<typeof loader>()
     return (<table className="w-1/2 scoretable text-xl px-10">
         {
             standings.map((standing: UserStats, index: number) => (
-                <tr className="max-h-5" style={standing.dead ? {textDecoration: 'line-through', fontSize:13}:{}}>
+                <tr className="max-h-5" style={standing.dead ? { textDecoration: 'line-through', fontSize: 13 } : {}}>
                     <td><Standing index={indexStart ? indexStart + index : index} /></td>
-                    <td style={standing.userId == userId ? {color: "#5f5fff"}: {}}>{userNames[standing.userId].name}</td>
+                    <td style={standing.userId == userId ? { color: "#5f5fff" } : {}}>{userNames[standing.userId].name}</td>
                     <Elo elo={standing.elo} />
                 </tr>
             ))
@@ -102,7 +121,7 @@ function StaningsTable({ standings, indexStart }: { standings: UserStats[], inde
 
 function Elo({ elo }: { elo: number }) {
     return (
-        <td style={{ color: elo < 1500 ? 'rgb(255 134 96)' : '#50a350', textAlign:"right" }}>
+        <td style={{ color: elo < 1500 ? 'rgb(255 134 96)' : '#50a350', textAlign: "right" }}>
             {elo}
         </td>
     )
@@ -113,7 +132,7 @@ function TimeRangePicker() {
 
 
     return (
-        <div className="flex flex-row items-center gap-10 justify-center w-full mb-3" >
+        <div className="flex flex-row items-center gap-10 justify-center w-full" >
             {timeScope != "alltime" ? (<Link to={`/dashboard/${timeScope}/${Math.max(0, Number(timeIndex) - 1)}`} className="cursor-pointer">
                 <ArrowLeftIcon className="cursor-pointer" />
             </Link>) : null}

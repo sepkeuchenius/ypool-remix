@@ -3,9 +3,8 @@ import { Duel, Player } from "teslo";
 import { UserStats } from "~/routes/dashboard/route";
 import { EloStanding, PlayedMatch } from "~/services/firebase.server";
 
-const LEARNING_RATE = 32
 
-export function calcEloFromGames(games: PlayedMatch[]): UserStats[] {
+export function calcEloFromGames(games: PlayedMatch[], learningRate: number): UserStats[] {
     // get players
     const players = Array.from(new Set(games.flatMap((game) => [game.winner, game.loser])));
     // initialize elo
@@ -17,7 +16,7 @@ export function calcEloFromGames(games: PlayedMatch[]): UserStats[] {
             console.log("Player not found", game);
             continue;
         }
-        const duel = new Duel({kFactor: LEARNING_RATE}); // todo: check k-factor
+        const duel = new Duel({kFactor: learningRate}); // todo: check k-factor
         duel.addPlayer(winner);
         duel.addPlayer(loser);
         duel.calculate(winner.id);
