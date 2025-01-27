@@ -48,7 +48,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
     return new Response(
         lastElos.map((standing: UserStats) => {
-            return `${userNames[standing.userId].name} ${standing.elo}`
+            return `${userNames[standing.userId].name.split(" ").join("_")} ${standing.elo}`
         }).join("\n"), 
         {headers:{ "Content-Type": "text/plain" }}
     );
