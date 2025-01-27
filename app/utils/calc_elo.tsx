@@ -3,7 +3,7 @@ import { Duel, Player } from "teslo";
 import { UserStats } from "~/routes/dashboard/route";
 import { EloStanding, PlayedMatch } from "~/services/firebase.server";
 
-const LEARNING_RATE = 32
+const LEARNING_RATE = 10
 
 export function calcEloFromGames(games: PlayedMatch[]): UserStats[] {
     // get players
