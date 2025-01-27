@@ -48,7 +48,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
     return new Response(
         lastElos.map((standing: UserStats) => {
-            return `${userNames[standing.userId].name.split(" ").join("_")} ${standing.elo}`
+            return `${userNames[standing.userId].name.split(" ").join("_").replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')} ${standing.elo}`
         }).join("\n"), 
         {headers:{ "Content-Type": "text/plain" }}
     );
