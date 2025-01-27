@@ -1,9 +1,9 @@
 import { Link, useLoaderData } from "@remix-run/react";
 import { LogOutIcon } from "lucide-react";
-import { loader } from "~/root";
 import ypool from "~/routes/assets/ypool.svg";
+
 export function Header() {
-    const { DB, userName } = useLoaderData<typeof loader>();
+    const { DB, userName } = { "DB": "?", "userName": "?"}
     return (
         <header className="px-10 w-full h-16 bg-slate-900 text-white flex items-center justify-between grow flex-row">
             <div className="flex flex-row items-center gap-3 justify-between">
